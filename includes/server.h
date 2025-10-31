@@ -89,8 +89,8 @@ typedef struct {
 } Feedback;
 
 // Globals
-extern pthread_spinlock_t login_lock;
 extern int logged_in_users[MAX_CLIENTS];
+extern pthread_mutex_t login_lock;
 
 // Utilities
 int read_from_client(int sock, char *buffer, int size);

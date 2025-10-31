@@ -2,7 +2,7 @@
 #include "includes/server.h"
 
 // Globals for login management
-pthread_spinlock_t login_lock;
+pthread_mutex_t login_lock;
 int logged_in_users[MAX_CLIENTS];
 
 void *handle_client(void *sock_ptr)
@@ -70,12 +70,12 @@ void *handle_client(void *sock_ptr)
     }
 
     // Login slot management
-    pthread_spin_lock(&login_lock);
+    pthread_mutex_lock(&login_lock);
     for (int i = 0; i < MAX_CLIENTS; i++)
     {
         if (logged_in_users[i] == user.userID)
         {
-            pthread_spin_unlock(&login_lock);
+            pthread_mutex_unlock(&login_lock);
             write_to_client(new_socket, "Login failed: This user is already logged in elsewhere.\n");
             close(user_fd);
             close(new_socket);
@@ -91,7 +91,7 @@ void *handle_client(void *sock_ptr)
             break;
         }
     }
-    pthread_spin_unlock(&login_lock);
+    pthread_mutex_unlock(&login_lock);
 
     if (logged_in_slot == -1)
     {
@@ -135,10 +135,10 @@ void *handle_client(void *sock_ptr)
     }
 
     // Logout
-    pthread_spin_lock(&login_lock);
+    pthread_mutex_lock(&login_lock);
     if (logged_in_users[logged_in_slot] == user.userID)
         logged_in_users[logged_in_slot] = -1;
-    pthread_spin_unlock(&login_lock);
+    pthread_mutex_unlock(&login_lock);
 
     close(user_fd);
     close(new_socket);
@@ -179,7 +179,7 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    pthread_spin_init(&login_lock, 0);
+    pthread_mutex_init(&login_lock, NULL);
     for (int i = 0; i < MAX_CLIENTS; i++)
         logged_in_users[i] = -1;
 
